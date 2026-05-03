@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:convert'; // Necessário para jsonEncode e jsonDecode
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart'; // Para salvar a sessão
 
 import 'dashboard.dart';
 
@@ -34,44 +36,74 @@ class _LoginPageState extends State<LoginPage> {
       return;
     }
 
+    // Recolhe o teclado antes de começar
+    FocusScope.of(context).unfocus();
+
     setState(() {
       errorMessage = null;
       isLoading = true;
     });
 
-    try {
-      final uri = Uri.parse('http://168.75.73.9/login');
+    bool loginComSucesso = false;
 
-      // Isso imita um <form method="POST"> do HTML:
-      // ...
+    try {
+      // 1. Atualizamos a URL para o novo padrão da API
+      final uri = Uri.parse('http://168.75.73.9/api/login');
+
+      // 2. Agora enviamos como JSON (padrão de APIs modernas)
       final res = await http
           .post(
             uri,
-            headers: const {
-              'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: {'email': email, 'senha': senha},
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({'email': email, 'senha': senha}),
           )
           .timeout(const Duration(seconds: 15));
 
       if (!mounted) return;
 
-      // SUCESSO: 200..299 ou 302 (redirect típico de login)
-      if ((res.statusCode == 302)) {
+      // 3. Lê a resposta da API (que agora é um JSON)
+      final respostaAPI = jsonDecode(res.body);
+
+      // SUCESSO: O Node.js retorna HTTP 200 e sucesso: true
+      if (res.statusCode == 200 && respostaAPI['sucesso'] == true) {
+        loginComSucesso = true;
+
+        // 4. SALVA O TOKEN NO CELULAR (A MÁGICA DA SESSÃO!)
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('jwt_token', respostaAPI['token']);
+        await prefs.setString('usuario_nome', respostaAPI['usuario']['nome']);
+        await prefs.setString('usuario_cargo', respostaAPI['usuario']['cargo']);
+
+        // 5. Navega para o Dashboard com a animação suave
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const DashboardPage()),
+          PageRouteBuilder(
+            transitionDuration: const Duration(milliseconds: 600),
+            pageBuilder: (context, animation, secondaryAnimation) =>
+                const DashboardPage(),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
+                  return FadeTransition(
+                    opacity: CurvedAnimation(
+                      parent: animation,
+                      curve: Curves.easeInOut,
+                    ),
+                    child: child,
+                  );
+                },
+          ),
         );
       } else {
+        // FALHA NO LOGIN (Senha errada, etc)
         setState(() {
-          errorMessage = 'Email ou senha inválidos. (HTTP ${res.statusCode})';
+          errorMessage = respostaAPI['erro'] ?? 'Erro ao fazer login.';
         });
       }
     } on TimeoutException {
-      setState(() => errorMessage = 'Tempo esgotado. Tente novamente.');
+      setState(() => errorMessage = 'Tempo esgotado. Verifique sua internet.');
     } catch (e) {
-      setState(() => errorMessage = 'Erro de conexão: $e');
+      setState(() => errorMessage = 'Erro de conexão com o servidor.');
     } finally {
-      if (mounted) {
+      if (mounted && !loginComSucesso) {
         setState(() => isLoading = false);
       }
     }
@@ -93,13 +125,13 @@ class _LoginPageState extends State<LoginPage> {
         child: SingleChildScrollView(
           child: SizedBox(
             width: double.infinity,
-            height: 860,
+            height: 800,
             child: Stack(
               children: [
                 Positioned(
                   left: 0,
                   right: 0,
-                  top: 0,
+                  top: -25,
                   child: Container(
                     height: 365,
                     decoration: const BoxDecoration(
@@ -113,7 +145,7 @@ class _LoginPageState extends State<LoginPage> {
                 ),
 
                 Positioned(
-                  top: 144,
+                  top: 110,
                   left: (w - 156.48) / 2,
                   child: Image.asset(
                     'assets/images/soon.png',
@@ -124,11 +156,11 @@ class _LoginPageState extends State<LoginPage> {
                 ),
 
                 Positioned(
-                  top: 404,
+                  top: 355,
                   left: (w - 132) / 2,
                   child: const SizedBox(
                     width: 132,
-                    height: 58,
+                    height: 63,
                     child: Align(
                       alignment: Alignment.center,
                       child: Text(
@@ -149,12 +181,12 @@ class _LoginPageState extends State<LoginPage> {
                   Positioned(
                     left: side,
                     right: side,
-                    top: 470,
+                    top: 420,
                     child: Container(
-                      padding: const EdgeInsets.all(10),
+                      padding: const EdgeInsets.all(5),
                       decoration: BoxDecoration(
                         color: const Color(0xFFFFCCCC),
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(10),
                       ),
                       child: Text(
                         errorMessage!,
@@ -170,10 +202,10 @@ class _LoginPageState extends State<LoginPage> {
                 Positioned(
                   left: side,
                   right: side,
-                  top: 494.41,
+                  top: 465,
                   child: _PillField(
                     icon: const _UserIcon(color: ink),
-                    hintText: 'Digite seu email',
+                    hintText: 'Digite seu e-mail',
                     controller: _email,
                     keyboardType: TextInputType.emailAddress,
                     obscureText: false,
@@ -183,7 +215,7 @@ class _LoginPageState extends State<LoginPage> {
                 Positioned(
                   left: side,
                   right: side,
-                  top: 570,
+                  top: 535,
                   child: _PillField(
                     icon: const _LockIcon(color: ink),
                     hintText: 'Digite sua senha',
@@ -196,7 +228,7 @@ class _LoginPageState extends State<LoginPage> {
                 Positioned(
                   left: side,
                   right: side,
-                  top: 645.59,
+                  top: 620,
                   child: SizedBox(
                     height: 52,
                     child: ElevatedButton(
@@ -212,7 +244,10 @@ class _LoginPageState extends State<LoginPage> {
                           ? const SizedBox(
                               width: 22,
                               height: 22,
-                              child: CircularProgressIndicator(strokeWidth: 2),
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: bg,
+                              ),
                             )
                           : const Text(
                               'Entrar',
@@ -228,7 +263,7 @@ class _LoginPageState extends State<LoginPage> {
                 ),
 
                 Positioned(
-                  top: 764,
+                  top: 725,
                   left: (w - 278) / 2,
                   child: const SizedBox(
                     width: 278,
@@ -297,7 +332,7 @@ class _PillField extends StatelessWidget {
         children: [
           const SizedBox(width: 20),
           SizedBox(
-            width: 33.33,
+            width: 15,
             height: 24,
             child: Align(alignment: Alignment.centerLeft, child: icon),
           ),
@@ -330,7 +365,6 @@ class _PillField extends StatelessWidget {
   }
 }
 
-// Ícones simples (sem dependências externas)
 class _UserIcon extends StatelessWidget {
   const _UserIcon({required this.color});
   final Color color;
@@ -385,7 +419,7 @@ class _LockIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return CustomPaint(
-      size: const Size(13.33, 17.5),
+      size: const Size(15, 17.5),
       painter: _LockPainter(color),
     );
   }

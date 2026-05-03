@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'shared_bottom_nav.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -14,27 +16,34 @@ class _DashboardPageState extends State<DashboardPage> {
   static const inkDark = Color(0xFF233B3E);
   static const subInk = Color(0xFF424849);
 
-  int active = 0;
+  // Variáveis para guardar os dados do usuário
+  String userName = 'Carregando...';
+  String userCargo = '...';
+
+  @override
+  void initState() {
+    super.initState();
+    _carregarDadosDoUsuario();
+  }
+
+  // Função assíncrona para buscar os dados no cofre do celular
+  Future<void> _carregarDadosDoUsuario() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      userName = prefs.getString('usuario_nome') ?? 'Usuário Desconhecido';
+
+      // Pega o cargo e deixa em maiúsculo para padronizar as verificações
+      String cargoCru = prefs.getString('usuario_cargo') ?? 'aluno';
+      userCargo = cargoCru.toUpperCase();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.sizeOf(context);
     final bottomInset = MediaQuery.paddingOf(context).bottom;
-
     final navW = (size.width - 24).clamp(320.0, 384.0);
-
-    final navH = 112.0;
-    final railH = 84.0;
-    final railTop = 28.0;
-
-    final fabSize = 60.0;
-
-    // Ajuste principal: subir o botão central para não cortar “Professor/Alunos”.
-    // Era top: 10
-    final fabTop = -8.0;
-
-    // Notch também um pouco mais “alto” para acompanhar o botão.
-    final notchCenterY = -6.0;
+    const navH = 112.0;
 
     return Scaffold(
       backgroundColor: headerBg,
@@ -44,6 +53,7 @@ class _DashboardPageState extends State<DashboardPage> {
           children: [
             Column(
               children: [
+                // ===== HEADER =====
                 Padding(
                   padding: const EdgeInsets.fromLTRB(18, 14, 18, 12),
                   child: Row(
@@ -58,23 +68,26 @@ class _DashboardPageState extends State<DashboardPage> {
                         child: const Icon(Icons.person, color: ink),
                       ),
                       const SizedBox(width: 12),
-                      const Expanded(
+                      Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            // NOME DINÂMICO
                             Text(
-                              'Henrique Oliveira',
-                              style: TextStyle(
+                              userName,
+                              style: const TextStyle(
                                 fontSize: 14,
                                 height: 20 / 14,
                                 letterSpacing: 0.28,
+                                fontWeight: FontWeight.bold,
                                 color: ink,
                               ),
                             ),
-                            SizedBox(height: 2),
+                            const SizedBox(height: 2),
+                            // CARGO DINÂMICO
                             Text(
-                              'Acesso administrativo',
-                              style: TextStyle(
+                              'Acesso: $userCargo',
+                              style: const TextStyle(
                                 fontSize: 10,
                                 height: 14 / 10,
                                 letterSpacing: 0.20,
@@ -87,7 +100,9 @@ class _DashboardPageState extends State<DashboardPage> {
                       SizedBox(
                         height: 37,
                         child: ElevatedButton.icon(
-                          onPressed: () {},
+                          onPressed: () {
+                            // Futuramente aqui chamaremos a tela de configurações / logout
+                          },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: surface,
                             foregroundColor: ink,
@@ -109,6 +124,8 @@ class _DashboardPageState extends State<DashboardPage> {
                     ],
                   ),
                 ),
+
+                // ===== SURFACE/CONTEÚDO =====
                 Expanded(
                   child: Container(
                     decoration: const BoxDecoration(
@@ -145,36 +162,60 @@ class _DashboardPageState extends State<DashboardPage> {
                           ),
                         ),
                         const SizedBox(height: 18),
-                        _SearchPill(),
+
+                        const _SearchPill(),
+
                         const SizedBox(height: 22),
-                        const _StatCard(
-                          bg: Color(0xFFDCF3ED),
-                          orbBg: Color.fromRGBO(30, 51, 55, 0.08),
-                          color: Color(0xFF1E3337),
-                          label: 'Total de alunos',
-                          value: '0',
-                          icon: Icons.groups_rounded,
-                        ),
-                        const SizedBox(height: 16),
-                        const _StatCard(
-                          bg: Color(0xFFE8E0B0),
-                          orbBg: Color.fromRGBO(76, 82, 61, 0.08),
-                          color: Color(0xFF4C523D),
-                          label: 'Processos ativos',
-                          value: '0',
-                          icon: Icons.description_rounded,
-                        ),
-                        const SizedBox(height: 16),
-                        const _StatCard(
-                          bg: Color(0xFFEFCECB),
-                          orbBg: Color.fromRGBO(80, 47, 48, 0.08),
-                          color: Color(0xFF502F30),
-                          label: 'Total de educadores',
-                          value: '0',
-                          icon: Icons.person_add_alt_1_rounded,
-                        ),
-                        const SizedBox(height: 22),
-                        _QuickActionsCard(),
+
+                        // ===== LÓGICA DE EXIBIÇÃO POR CARGO =====
+                        if (userCargo != 'ALUNO' && userCargo != 'PAIS') ...[
+                          // VISÃO DA PEDAGOGIA / PROFESSOR
+                          const _StatCard(
+                            bg: Color(0xFFDCF3ED),
+                            orbBg: Color.fromRGBO(30, 51, 55, 0.08),
+                            color: Color(0xFF1E3337),
+                            label: 'Total de alunos',
+                            value: '0',
+                            icon: Icons.groups_rounded,
+                          ),
+                          const SizedBox(height: 16),
+                          const _StatCard(
+                            bg: Color(0xFFE8E0B0),
+                            orbBg: Color.fromRGBO(76, 82, 61, 0.08),
+                            color: Color(0xFF4C523D),
+                            label: 'Processos ativos',
+                            value: '0',
+                            icon: Icons.description_rounded,
+                          ),
+                          const SizedBox(height: 16),
+                          const _StatCard(
+                            bg: Color(0xFFEFCECB),
+                            orbBg: Color.fromRGBO(80, 47, 48, 0.08),
+                            color: Color(0xFF502F30),
+                            label: 'Total de educadores',
+                            value: '0',
+                            icon: Icons.person_add_alt_1_rounded,
+                          ),
+                          const SizedBox(height: 22),
+                          const _QuickActionsCard(),
+                        ] else ...[
+                          // VISÃO DO ALUNO / PAIS
+                          Container(
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFE7E3DF),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: const Text(
+                              'Você não tem avaliações ou tarefas pendentes no momento.',
+                              style: TextStyle(
+                                color: ink,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -182,104 +223,13 @@ class _DashboardPageState extends State<DashboardPage> {
               ],
             ),
 
-            // Bottom nav overlay
+            // ========= BOTTOM NAV =========
             Positioned(
               left: (size.width - navW) / 2,
               bottom: 8 + bottomInset,
-              width: navW,
-              height: navH,
-              child: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  Positioned(
-                    left: 0,
-                    top: railTop,
-                    width: navW,
-                    height: railH,
-                    child: ClipPath(
-                      clipper: _NotchedRailClipper(
-                        notchRadius: 32,
-                        notchCenterX: navW / 2,
-                        notchCenterY: notchCenterY,
-                      ),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFBFDDDC),
-                          border: Border.all(color: const Color(0xFF9CBBBA)),
-                          borderRadius: BorderRadius.circular(50),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                          child: Row(
-                            children: [
-                              _NavTab(
-                                active: active == 0,
-                                icon: Icons.grid_view_rounded,
-                                label: 'Painel',
-                                onTap: () => setState(() => active = 0),
-                              ),
-                              const SizedBox(width: 2),
-                              _NavTab(
-                                active: active == 1,
-                                icon: Icons.groups_2_rounded,
-                                label: 'Alunos',
-                                onTap: () => setState(() => active = 1),
-                              ),
-                              const Spacer(),
-                              _NavTab(
-                                active: active == 2,
-                                icon: Icons.school_rounded,
-                                label: 'Professor',
-                                onTap: () => setState(() => active = 2),
-                              ),
-                              const SizedBox(width: 2),
-                              _NavTab(
-                                active: active == 3,
-                                icon: Icons.storage_rounded,
-                                label: 'Dados',
-                                onTap: () => setState(() => active = 3),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  // Botão central (subido)
-                  Positioned(
-                    left: (navW - fabSize) / 2,
-                    top: fabTop,
-                    width: fabSize,
-                    height: fabSize,
-                    child: GestureDetector(
-                      onTap: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Adicionar (em breve)')),
-                        );
-                      },
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFB4D4D3),
-                          border: Border.all(color: const Color(0xFF9CBBBA)),
-                          borderRadius: BorderRadius.circular(999),
-                          boxShadow: const [
-                            BoxShadow(
-                              color: Color.fromRGBO(0, 0, 0, 0.18),
-                              blurRadius: 10,
-                              offset: Offset(0, 6),
-                            ),
-                          ],
-                        ),
-                        child: const Icon(
-                          Icons.person_add_alt_1,
-                          color: ink,
-                          size: 28,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+              child: SharedBottomNav(
+                currentIndex: 0,
+                userCargo: userCargo, // Passamos a variável dinâmica aqui!
               ),
             ),
           ],
@@ -289,7 +239,11 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 }
 
+// ============ COMPONENTES DA TELA =================
+
 class _SearchPill extends StatelessWidget {
+  const _SearchPill();
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -401,6 +355,8 @@ class _StatCard extends StatelessWidget {
 }
 
 class _QuickActionsCard extends StatelessWidget {
+  const _QuickActionsCard();
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -424,7 +380,6 @@ class _QuickActionsCard extends StatelessWidget {
           ),
           const SizedBox(height: 14),
 
-          // Botões manuais (alinhamento perfeito)
           _QuickPillButton(text: 'Cadastrar Aluno', onTap: () {}),
           const SizedBox(height: 12),
           _QuickPillButton(text: 'Cadastrar Educador', onTap: () {}),
@@ -452,7 +407,6 @@ class _QuickPillButton extends StatelessWidget {
           customBorder: const StadiumBorder(),
           onTap: onTap,
           child: Center(
-            // Centraliza o conjunto ícone+texto no “meio real” do botão
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: const [
@@ -472,14 +426,11 @@ class _QuickPillButton extends StatelessWidget {
   }
 }
 
-// Separado só para garantir altura e baseline consistentes.
 class _QuickLabel extends StatelessWidget {
   const _QuickLabel();
 
   @override
   Widget build(BuildContext context) {
-    // O texto do botão no HTML tem um “line-height” alto (30px),
-    // mas visualmente fica bem centralizado. Aqui deixamos compacto e central.
     final parent = context.findAncestorWidgetOfExactType<_QuickPillButton>();
     return Text(
       parent?.text ?? '',
@@ -492,85 +443,4 @@ class _QuickLabel extends StatelessWidget {
       ),
     );
   }
-}
-
-class _NavTab extends StatelessWidget {
-  const _NavTab({
-    required this.active,
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
-
-  final bool active;
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: active ? const Color(0xFFFEF9F2) : Colors.transparent,
-      borderRadius: BorderRadius.circular(999),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(999),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 14, color: const Color(0xFF304F55)),
-              const SizedBox(width: 6),
-              Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.clip,
-                softWrap: false,
-                style: const TextStyle(
-                  fontSize: 11.5,
-                  height: 1.0,
-                  letterSpacing: 0.35,
-                  color: Color(0xFF304F55),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _NotchedRailClipper extends CustomClipper<Path> {
-  _NotchedRailClipper({
-    required this.notchRadius,
-    required this.notchCenterX,
-    required this.notchCenterY,
-  });
-
-  final double notchRadius;
-  final double notchCenterX;
-  final double notchCenterY;
-
-  @override
-  Path getClip(Size size) {
-    final rect = Path()
-      ..addRRect(
-        RRect.fromRectAndRadius(Offset.zero & size, const Radius.circular(50)),
-      );
-
-    final hole = Path()
-      ..addOval(
-        Rect.fromCircle(
-          center: Offset(notchCenterX, notchCenterY),
-          radius: notchRadius,
-        ),
-      );
-
-    return Path.combine(PathOperation.difference, rect, hole);
-  }
-
-  @override
-  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
 }

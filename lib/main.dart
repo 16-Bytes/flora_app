@@ -1,18 +1,35 @@
 import 'package:flutter/material.dart';
-import 'login.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-void main() {
-  runApp(const MyApp());
+import 'login.dart';
+import 'dashboard.dart'; // Lembre-se de importar o dashboard aqui!
+
+void main() async {
+  // Isso é obrigatório sempre que formos rodar código assíncrono (await)
+  // antes do runApp() iniciar o Flutter.
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Verifica no cofre do celular se já existe um token de sessão salvo
+  final prefs = await SharedPreferences.getInstance();
+  final token = prefs.getString('jwt_token');
+
+  // Define a tela inicial: se tem token, vai pro Dashboard. Se não tem, vai pro Login.
+  Widget telaInicial = const LoginPage();
+
+  if (token != null && token.isNotEmpty) {
+    telaInicial = const DashboardPage();
+  }
+
+  runApp(MyApp(telaInicial: telaInicial));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final Widget telaInicial;
+
+  const MyApp({super.key, required this.telaInicial});
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: LoginPage(),
-    );
+    return MaterialApp(debugShowCheckedModeBanner: false, home: telaInicial);
   }
 }
