@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart'; // Importante para ler a memória
 import 'shared_bottom_nav.dart';
+import 'configuracoes.dart';
 
 // ------------------------------------
 // MODELO DO ALUNO E MOCK DE DADOS
@@ -30,8 +31,8 @@ class AlunosPage extends StatefulWidget {
 }
 
 class _AlunosPageState extends State<AlunosPage> {
-  // Variáveis para guardar os dados do usuário
-  String userName = 'Carregando...';
+  // Variáveis para guardar os dados do usuário....
+  String userName = 'Calma...'; //MEME MUDA ISSO DPS PFV
   String userCargo = '...';
 
   @override
@@ -45,9 +46,14 @@ class _AlunosPageState extends State<AlunosPage> {
     final prefs = await SharedPreferences.getInstance();
     if (mounted) {
       setState(() {
-        userName = prefs.getString('usuario_nome') ?? 'Usuário Desconhecido';
+        userName =
+            prefs.getString('usuario_nome') ??
+            'Usuário Desconhecido'; //Eu estou falando com mauro ou oruam?
         String cargoCru = prefs.getString('usuario_cargo') ?? 'aluno';
-        userCargo = cargoCru.toUpperCase();
+        userCargo = cargoCru.replaceFirst(
+          cargoCru[0],
+          (cargoCru[0]).toUpperCase(),
+        );
       });
     }
   }
@@ -115,7 +121,14 @@ class _AlunosPageState extends State<AlunosPage> {
                       SizedBox(
                         height: 37,
                         child: ElevatedButton.icon(
-                          onPressed: () {},
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const ConfiguracoesPage(),
+                              ),
+                            );
+                          },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFFFEF9F2),
                             foregroundColor: const Color(0xFF304F55),
@@ -138,7 +151,7 @@ class _AlunosPageState extends State<AlunosPage> {
                   ),
                 ),
 
-                // ===== SURFACE/CONTEÚDO =====
+                // Contiudo
                 Expanded(
                   child: Container(
                     decoration: const BoxDecoration(
@@ -172,7 +185,7 @@ class _AlunosPageState extends State<AlunosPage> {
                         const _FiltroRow(),
 
                         const SizedBox(height: 10),
-                        // ====== LISTA ======
+                        // Listas
                         ...mockAlunos.map((aluno) => _AlunoCard(aluno: aluno)),
                       ],
                     ),
@@ -181,7 +194,7 @@ class _AlunosPageState extends State<AlunosPage> {
               ],
             ),
 
-            // ========= BOTTOM NAV =========
+            // NaVBAR
             Positioned(
               left: (w - navW) / 2,
               bottom: 8 + bottomInset,
@@ -198,7 +211,7 @@ class _AlunosPageState extends State<AlunosPage> {
   }
 }
 
-// ============ COMPONENTES DA TELA =================
+// COMPONENTES Tela
 
 class _SearchPill extends StatelessWidget {
   const _SearchPill();

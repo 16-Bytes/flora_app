@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flora/dashboard.dart';
 import 'package:flora/alunos.dart';
+import 'package:flora/formulario.dart'; 
 
 class SharedBottomNav extends StatelessWidget {
   final int currentIndex;
@@ -11,8 +12,7 @@ class SharedBottomNav extends StatelessWidget {
     required this.currentIndex,
     required this.userCargo,
   });
-
-  // ====== FUNÇÃO DE NAVEGAÇÃO COM TRANSIÇÃO (FADE) ======
+// transição
   void _navigate(BuildContext context, Widget page) {
     Navigator.pushReplacement(
       context,
@@ -31,17 +31,13 @@ class SharedBottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Decide qual menu desenhar baseado no cargo
-    if (userCargo == 'PEDAGOGIA') {
+    if (userCargo == 'Pedagogia') {
       return _buildPedagogiaNav(context);
     } else {
       return _buildStandardNav(context);
     }
   }
-
-  // ===========================================================================
-  // MENU 1: PEDAGOGIA (Com notch, botão central e espaçamentos originais)
-  // ===========================================================================
+  // MENU 1 --> PEGADOGIA
   Widget _buildPedagogiaNav(BuildContext context) {
     final size = MediaQuery.sizeOf(context);
     final navW = (size.width - 24).clamp(320.0, 384.0);
@@ -102,11 +98,9 @@ class SharedBottomNav extends StatelessWidget {
                             _navigate(context, const AlunosPage());
                         },
                       ),
-
-                      // O SEGREDO DO SEU CÓDIGO ORIGINAL QUE MANTÉM O BURACO DO BOTÃO
                       const Spacer(),
 
-                      // --- ABA 2: PROFESSOR ---
+                      // Profeso 2
                       _NavTab(
                         active: currentIndex == 2,
                         icon: Icons.school_rounded,
@@ -115,7 +109,7 @@ class SharedBottomNav extends StatelessWidget {
                       ),
                       const SizedBox(width: 2),
 
-                      // --- ABA 3: DADOS ---
+                      //DADOS 3
                       _NavTab(
                         active: currentIndex == 3,
                         icon: Icons.storage_rounded,
@@ -167,14 +161,12 @@ class SharedBottomNav extends StatelessWidget {
     );
   }
 
-  // ===========================================================================
-  // MENU 2: PROFESSORES, ALUNOS E PAIS (Pílula lisa com FittedBox anti-quebra)
-  // ===========================================================================
+  // 2
   Widget _buildStandardNav(BuildContext context) {
     final size = MediaQuery.sizeOf(context);
     final navW = (size.width - 24).clamp(320.0, 384.0);
 
-    const navH = 112.0; // Mantém a altura total para a tela não dar "pulo"
+    const navH = 112.0; 
     const railH = 84.0;
     const railTop = 28.0;
 
@@ -189,7 +181,7 @@ class SharedBottomNav extends StatelessWidget {
             width: navW,
             height: railH,
             child: Container(
-              // Sem ClipPath aqui, apenas a pílula arredondada
+              // Sem ClipPath aqui pq fica um coco
               decoration: BoxDecoration(
                 color: const Color(0xFFBFDDDC),
                 border: Border.all(color: const Color(0xFF9CBBBA)),
@@ -198,7 +190,7 @@ class SharedBottomNav extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8),
                 child: FittedBox(
-                  // MÁGICA: Escala o menu se a tela for muito pequena!
+
                   fit: BoxFit.scaleDown,
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -217,7 +209,10 @@ class SharedBottomNav extends StatelessWidget {
                         active: currentIndex == 1,
                         icon: Icons.assignment_rounded,
                         label: 'Formulários',
-                        onTap: () {},
+                        onTap: () {
+                          if (currentIndex != 1)
+                            _navigate(context, const FormularioPage());
+                        },
                       ),
                       const SizedBox(width: 4),
                       _NavTab(
@@ -245,7 +240,6 @@ class SharedBottomNav extends StatelessWidget {
   }
 }
 
-// O SEU CLIPPER ORIGINAL INTOCADO
 class _NotchedRailClipper extends CustomClipper<Path> {
   _NotchedRailClipper({
     required this.notchRadius,
@@ -279,7 +273,6 @@ class _NotchedRailClipper extends CustomClipper<Path> {
   bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
 }
 
-// A SUA ABA ORIGINAL INTOCADA (Garante que a forma não quebre)
 class _NavTab extends StatelessWidget {
   const _NavTab({
     required this.active,

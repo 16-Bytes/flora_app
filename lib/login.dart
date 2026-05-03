@@ -13,6 +13,8 @@ class LoginPage extends StatefulWidget {
   State<LoginPage> createState() => _LoginPageState();
 }
 
+//PURO GPT MORES UM BEIJO PROS FÃS DELE VIU PQ O TANTO QUE ME FUDI NÃO TÁ ESCRITO
+
 class _LoginPageState extends State<LoginPage> {
   final _email = TextEditingController();
   final _senha = TextEditingController();
@@ -93,7 +95,7 @@ class _LoginPageState extends State<LoginPage> {
           ),
         );
       } else {
-        // FALHA NO LOGIN (Senha errada, etc)
+        // FALHA LOGON (Senha errada, etc bla bla bla ble ble ble)
         setState(() {
           errorMessage = respostaAPI['erro'] ?? 'Erro ao fazer login.';
         });
@@ -459,3 +461,5 @@ class _LockPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
+// ester ego
+// programo logo erro 

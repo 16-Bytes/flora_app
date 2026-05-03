@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'shared_bottom_nav.dart';
+import 'configuracoes.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -32,9 +33,12 @@ class _DashboardPageState extends State<DashboardPage> {
     setState(() {
       userName = prefs.getString('usuario_nome') ?? 'Usuário Desconhecido';
 
-      // Pega o cargo e deixa em maiúsculo para padronizar as verificações
+      // Pega o cargo e deixa a primeira em maiúsculo e o resto em minúsculo LEMBRETE DE USAR ISSO EM TODAS AS OUTRAS PAGINAS VIU PQ SE NÃO O SHARED_BOTTON_NAV NAO ACOMPANHA A SEÇÃO
       String cargoCru = prefs.getString('usuario_cargo') ?? 'aluno';
-      userCargo = cargoCru.toUpperCase();
+      userCargo = cargoCru.replaceFirst(
+        cargoCru[0],
+        (cargoCru[0]).toUpperCase(),
+      );
     });
   }
 
@@ -101,7 +105,13 @@ class _DashboardPageState extends State<DashboardPage> {
                         height: 37,
                         child: ElevatedButton.icon(
                           onPressed: () {
-                            // Futuramente aqui chamaremos a tela de configurações / logout
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const ConfiguracoesPage(),
+                              ),
+                            );
+                            // Futuramente aqui chamemos a tela de configurações / logout
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: surface,
@@ -167,6 +177,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
                         const SizedBox(height: 22),
 
+                        // Isso aqui eu fiz no pelo viu <3
                         // ===== LÓGICA DE EXIBIÇÃO POR CARGO =====
                         if (userCargo != 'ALUNO' && userCargo != 'PAIS') ...[
                           // VISÃO DA PEDAGOGIA / PROFESSOR
@@ -223,13 +234,13 @@ class _DashboardPageState extends State<DashboardPage> {
               ],
             ),
 
-            // ========= BOTTOM NAV =========
+            // BOTTOM NAV
             Positioned(
               left: (size.width - navW) / 2,
               bottom: 8 + bottomInset,
               child: SharedBottomNav(
                 currentIndex: 0,
-                userCargo: userCargo, // Passamos a variável dinâmica aqui!
+                userCargo: userCargo, // Passamos a variável dinâmica pra Ká!
               ),
             ),
           ],

@@ -2,18 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'login.dart';
-import 'dashboard.dart'; // Lembre-se de importar o dashboard aqui!
+import 'dashboard.dart'; 
 
 void main() async {
-  // Isso é obrigatório sempre que formos rodar código assíncrono (await)
-  // antes do runApp() iniciar o Flutter.
+  // obrigatório sempre que for rodar código assíncrono jurrooo
+  // antes do runApp() iniciar o Flutter kct.
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Verifica no cofre do celular se já existe um token de sessão salvo
+  // Verifica no cofre do celular se já existe um token de sessão salvo se não vai pra login
   final prefs = await SharedPreferences.getInstance();
   final token = prefs.getString('jwt_token');
 
-  // Define a tela inicial: se tem token, vai pro Dashboard. Se não tem, vai pro Login.
+  // Define a tela inicial: se tem token, vai pro Dashboard.
   Widget telaInicial = const LoginPage();
 
   if (token != null && token.isNotEmpty) {
