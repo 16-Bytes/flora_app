@@ -11,9 +11,12 @@
 .svn/
 .swiftpm/
 migrate_working_dir/
+/build/
+
 
 # IntelliJ related
 *.iml
+.env
 *.ipr
 *.iws
 .idea/

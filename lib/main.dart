@@ -1,35 +1,60 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-import 'login.dart';
-import 'dashboard.dart'; 
+import 'core/services/api_service.dart';
+import 'core/theme/app_theme.dart';
+import 'core/theme/theme_controller.dart';
+import 'features/auth/login.dart';
+import 'features/portal/dashboard.dart';
+
+/// Instância global do controlador de tema.
+/// Acessível em qualquer lugar para mudar o tema.
+final themeController = ThemeController();
 
 void main() async {
-  // obrigatório sempre que for rodar código assíncrono jurrooo
-  // antes do runApp() iniciar o Flutter kct.
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Verifica no cofre do celular se já existe um token de sessão salvo se não vai pra login
-  final prefs = await SharedPreferences.getInstance();
-  final token = prefs.getString('jwt_token');
+  await dotenv.load(fileName: '.env');
+  await themeController.init();
 
-  // Define a tela inicial: se tem token, vai pro Dashboard.
-  Widget telaInicial = const LoginPage();
+  // Verifica se o token salvo ainda é válido
+  final tokenValido = await ApiService.isTokenValid();
 
-  if (token != null && token.isNotEmpty) {
-    telaInicial = const DashboardPage();
-  }
-
-  runApp(MyApp(telaInicial: telaInicial));
+  runApp(FloraApp(tokenValido: tokenValido));
 }
 
-class MyApp extends StatelessWidget {
-  final Widget telaInicial;
+class FloraApp extends StatelessWidget {
+  final bool tokenValido;
+  const FloraApp({super.key, required this.tokenValido});
 
-  const MyApp({super.key, required this.telaInicial});
+  ThemeData _getTheme(String mode) {
+    switch (mode) {
+      case 'dark':
+        return AppTheme.dark();
+      case 'highContrast':
+        return AppTheme.highContrast();
+      default:
+        return AppTheme.light();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(debugShowCheckedModeBanner: false, home: telaInicial);
+    // ListenableBuilder isola o rebuild: quando o tema muda,
+    // apenas o MaterialApp é reconstruído — não o FloraApp inteiro.
+    // Widgets const filhos (DashboardPage, LoginPage) são preservados.
+    return ListenableBuilder(
+      listenable: themeController,
+      builder: (context, _) {
+        return MaterialApp(
+          title: 'Flora',
+          debugShowCheckedModeBanner: false,
+          theme: _getTheme(themeController.mode),
+          themeAnimationDuration: const Duration(milliseconds: 400),
+          themeAnimationCurve: Curves.easeInOut,
+          home: tokenValido ? const DashboardPage() : const LoginPage(),
+        );
+      },
+    );
   }
 }
